@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+tests/test_core.py
+wraith/__init__.py
+wraith/cli.py
+wraith/core.py
+wraith/hooks/bash.sh
+wraith/hooks/zsh.sh
+wraith_terminal.egg-info/PKG-INFO
+wraith_terminal.egg-info/SOURCES.txt
+wraith_terminal.egg-info/dependency_links.txt
+wraith_terminal.egg-info/entry_points.txt
+wraith_terminal.egg-info/requires.txt
+wraith_terminal.egg-info/top_level.txt

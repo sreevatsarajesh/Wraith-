@@ -1,108 +1,60 @@
-# Wraith 👻
+# Wraith 👻 — A Ghost in Your Terminal
 
-**A haunted terminal powered by a local open-weight model.** Wraith watches completed shell commands, reacts in character, and can keep a small local memory of your sessions.
+Wraith is an open-source terminal companion that reacts to completed shell commands in the voice of forgotten technologies. It uses a local Ollama model when available, stores event history in SQLite, and falls back to scripted whispers when Ollama is unavailable.
 
-- Works with `zsh` and `bash`
-- Uses Ollama for local inference (no hosted AI API)
-- Ghost personalities: `geocities`, `fortran`, `deleted-file`
-- Local SQLite event history
-- Safety-first: never executes model output; command text is not sent anywhere except your local Ollama server
+## Features
+- Four personalities: GeoCities, Fortran, Deleted File, Unix Daemon.
+- Local-first inference through Ollama; no hosted AI API.
+- Context-aware categories for failures, tests, Git, installs, infrastructure and destructive operations.
+- Local memory with inspect and erase commands.
+- Best-effort redaction of common token formats before storage/inference.
+- Model output is displayed only, never executed.
+- Deterministic fallback lines work without Ollama; generative responses require Ollama and a downloaded model.
 
-> Prototype note: Wraith records command text and exit status locally when enabled. Review your shell history/privacy needs before enabling it on shared machines. Secrets can appear in command arguments, so use `WRAITH_ENABLED=0` to disable it at any time.
+## Install on macOS
+Install Ollama from https://ollama.com or `brew install ollama`.
 
-## Quick start (macOS / Linux)
+Terminal 1: `ollama serve`
 
-### 1. Install Ollama and download a model
-Install Ollama from https://ollama.com, then run:
-
+Terminal 2:
 ```bash
 ollama pull qwen2.5:3b
-ollama serve
-```
-
-If Ollama is already running, you can skip `ollama serve`. You can override the model with `WRAITH_MODEL`.
-
-### 2. Install Wraith
-
-```bash
+cd /path/to/Wraith
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-wraith init --shell zsh --ghost geocities
-```
-
-For bash, use `--shell bash`.
-
-### 3. Enable the shell hook
-The init command prints the exact line to add to your `~/.zshrc` or `~/.bashrc`. Add it, then restart the terminal or source your rc file.
-
-For zsh, the line is:
-
-```bash
-source "$(wraith hook-path zsh)"
-```
-
-For bash:
-
-```bash
-source "$(wraith hook-path bash)"
-```
-
-The hook only observes commands after they finish. To disable temporarily:
-
-```bash
-export WRAITH_ENABLED=0
-```
-
-### 4. Test without a shell hook
-
-```bash
-wraith haunt "git push origin main" --status 0 --ghost geocities
 wraith status
-wraith memory --limit 10
+wraith haunt "git push origin main" --ghost geocities
+wraith ghosts
 ```
+
+Enable zsh integration:
+```bash
+echo 'source "$(wraith hook-path zsh)"' >> ~/.zshrc
+source ~/.zshrc
+```
+Disable at any time: `export WRAITH_ENABLED=0`
+Set personality: `export WRAITH_GHOST=fortran`
 
 ## Commands
-
-```text
-wraith init [--shell zsh|bash] [--ghost geocities|fortran|deleted-file]
-wraith haunt "command text" [--status N] [--ghost NAME]
-wraith status
-wraith memory [--limit N]
-wraith forget
-wraith hook-path zsh|bash
-```
+- `wraith init --shell zsh --ghost geocities`
+- `wraith haunt "pytest" --status 1`
+- `wraith status`
+- `wraith ghosts`
+- `wraith memory --limit 10`
+- `wraith forget`
 
 ## Configuration
+`WRAITH_ENABLED` (default `1`), `WRAITH_MODEL` (default `qwen2.5:3b`), `WRAITH_OLLAMA_URL` (default `http://127.0.0.1:11434`), `WRAITH_GHOST` (default `geocities`), `WRAITH_DB` (default `~/.wraith/wraith.db`), `WRAITH_TIMEOUT` (default `5` seconds), `WRAITH_EXCLUDE` (comma-separated command substrings), `WRAITH_DEBUG` (default `0`).
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `WRAITH_ENABLED` | `1` | Set to `0` to disable shell observation |
-| `WRAITH_MODEL` | `qwen2.5:3b` | Ollama model name |
-| `WRAITH_OLLAMA_URL` | `http://127.0.0.1:11434` | Local Ollama endpoint |
-| `WRAITH_GHOST` | `geocities` | Default personality |
-| `WRAITH_DB` | `~/.wraith/wraith.db` | Local SQLite database |
-| `WRAITH_TIMEOUT` | `8` | Maximum seconds to wait for Ollama |
-
-## Design & privacy
-
-Wraith stores timestamps, command text, exit codes, and short ghost responses in a local SQLite database. It does not upload telemetry. When Ollama is unavailable, Wraith falls back to deterministic local lines. Avoid running it where shell commands may contain credentials or private data. Wraith never reads deleted files and does not claim to recover their contents.
-
-## Development
-
-```bash
-pip install -e ".[dev]"
-pytest
-```
-
-## Roadmap
-
-- [ ] Optional project-aware context
-- [ ] Secret redaction before local inference
-- [ ] Configurable quiet hours and response frequency
-- [ ] More shells and custom ghost packs
-- [ ] Model latency / offline benchmarks
+## Privacy & safety
+Wraith stores command text, exit codes, timestamps, ghost names and responses in a local SQLite database. Common credential patterns are redacted and sensitive prefixes such as `env`, `printenv`, and `export` are ignored. Redaction is best-effort, not a guarantee; review code and exclusions before enabling it in sensitive environments. The shell hook observes completed commands; it does not alter their execution. Wraith does not read or recover deleted files.
 
 ## Why open innovation?
+After downloading a model, Wraith can generate reactions locally without sending command history to a hosted AI service or requiring a paid API. Its hooks, prompts, event engine and storage are inspectable and modifiable. The fallback mode remains available if Ollama is stopped.
 
-The ghost runs on an open-weight model through a local inference server. Once the model is downloaded, Wraith can respond without internet access, keep command history on the developer's machine, and remain useful without a paid hosted AI API. The shell integration and core event engine are open source and inspectable.
+## Tests
+`pip install -e ".[dev]"` then `pytest -q`.
+
+## License
+MIT. Model weights and Ollama have their own licenses and terms; review them separately.
